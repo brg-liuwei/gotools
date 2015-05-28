@@ -31,12 +31,12 @@ func NewRotateLogger(path string, prefix string, flag int, backup int) *RotateLo
 	var err error
 	absPath, err = filepath.Abs(path)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	var fp *os.File
 	fp, err = os.OpenFile(absPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return &RotateLogger{
 		maxSuffix: backup,
@@ -49,7 +49,7 @@ func NewRotateLogger(path string, prefix string, flag int, backup int) *RotateLo
 		goRotate:  false,
 		lines:     0,
 		timeout:   time.Now(),
-	}
+	}, nil
 }
 
 func (rlogger *RotateLogger) rotateRoutine() {
