@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -19,11 +20,11 @@ type RotateLogger struct {
 	logger    *log.Logger
 	rCond     func() bool
 	goRotate  bool
-	lines     int
+	lines     int32
 	timeout   time.Time
 }
 
-func NewRotateLogger(path string, prefix string, flag int, backup int) *RotateLogger {
+func NewRotateLogger(path string, prefix string, flag int, backup int) (*RotateLogger, error) {
 	if backup < 0 {
 		backup = 0
 	}
@@ -106,7 +107,7 @@ func (rlogger *RotateLogger) SetLineRotate(line int) {
 		return
 	}
 	rlogger.SetRotateCond(func() bool {
-		if rlogger.lines >= line {
+		if rlogger.lines >= int32(line) {
 			return true
 		}
 		return false
@@ -126,7 +127,7 @@ func (rlogger *RotateLogger) SetTimeRotate(t time.Duration) {
 
 func (rlogger *RotateLogger) Println(arg ...interface{}) {
 	rlogger.RLock()
-	rlogger.lines++
+	atomic.AddInt32(&rlogger.lines, 1)
 	rlogger.logger.Println(arg...)
 	rlogger.RUnlock()
 }
