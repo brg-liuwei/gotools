@@ -53,42 +53,46 @@ func NewRotateLogger(path string, prefix string, flag int, backup int) (*RotateL
 	}, nil
 }
 
+func (rlogger *RotateLogger) rotate() {
+	rlogger.Lock()
+	defer rlogger.Unlock()
+	if rlogger.lines == 0 {
+		// if empty log file, do not rotate
+		return
+	}
+	if !rlogger.rCond() {
+		return
+	}
+	if rlogger.maxSuffix == 0 {
+		rlogger.fp.Truncate(0)
+		return
+	}
+	flist := make([]string, 0, rlogger.maxSuffix+1)
+	flist = append(flist, rlogger.absPath)
+	for i := 1; i <= rlogger.maxSuffix; i++ {
+		flist = append(flist, fmt.Sprintf("%s.%d", rlogger.absPath, i))
+	}
+	rlogger.fp.Close()
+	rlogger.lines = 0
+
+	var err error
+	for i := len(flist) - 1; i > 0; i-- {
+		if _, err = os.Stat(flist[i-1]); err != nil {
+			// file not exist
+			continue
+		}
+		if err = os.Rename(flist[i-1], flist[i]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
+	}
+	rlogger.fp, _ = os.OpenFile(rlogger.absPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
+	rlogger.logger = log.New(rlogger.fp, rlogger.prefix, rlogger.flag)
+}
+
 func (rlogger *RotateLogger) rotateRoutine() {
 	for {
-		rlogger.Lock()
-		if !rlogger.rCond() {
-			rlogger.Unlock()
-			time.Sleep(time.Second)
-			continue
-		}
-		if rlogger.maxSuffix == 0 {
-			rlogger.fp.Truncate(0)
-			rlogger.Unlock()
-			time.Sleep(time.Second)
-			continue
-		}
-		flist := make([]string, 0, rlogger.maxSuffix+1)
-		flist = append(flist, rlogger.absPath)
-		for i := 1; i <= rlogger.maxSuffix; i++ {
-			flist = append(flist, fmt.Sprintf("%s.%d", rlogger.absPath, i))
-		}
-		rlogger.fp.Close()
-		rlogger.lines = 0
-
-		var err error
-		for i := len(flist) - 1; i > 0; i-- {
-			if _, err = os.Stat(flist[i-1]); err != nil {
-				// file not exist
-				continue
-			}
-			if err = os.Rename(flist[i-1], flist[i]); err != nil {
-				fmt.Fprintln(os.Stderr, err)
-			}
-		}
-		rlogger.fp, _ = os.OpenFile(rlogger.absPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
-		rlogger.logger = log.New(rlogger.fp, rlogger.prefix, rlogger.flag)
-		rlogger.Unlock()
 		time.Sleep(time.Second)
+		rlogger.rotate()
 	}
 }
 
