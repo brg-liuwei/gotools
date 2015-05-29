@@ -53,15 +53,12 @@ func NewRotateLogger(path string, prefix string, flag int, backup int) (*RotateL
 	}, nil
 }
 
-func (rlogger *RotateLogger) rotate() {
-	rlogger.Lock()
-	defer rlogger.Unlock()
-	if rlogger.lines == 0 {
-		// if empty log file, do not rotate
-		return
-	}
-	if !rlogger.rCond() {
-		return
+func (rlogger *RotateLogger) forceRotateWithLock() {
+	if stat, err := os.Stat(rlogger.absPath); err == nil {
+		// do not rotate empty log file
+		if stat.Size() == 0 {
+			return
+		}
 	}
 	if rlogger.maxSuffix == 0 {
 		rlogger.fp.Truncate(0)
@@ -89,7 +86,19 @@ func (rlogger *RotateLogger) rotate() {
 	rlogger.logger = log.New(rlogger.fp, rlogger.prefix, rlogger.flag)
 }
 
+func (rlogger *RotateLogger) rotate() {
+	rlogger.Lock()
+	defer rlogger.Unlock()
+	if !rlogger.rCond() {
+		return
+	}
+	rlogger.forceRotateWithLock()
+}
+
 func (rlogger *RotateLogger) rotateRoutine() {
+	rlogger.Lock()
+	rlogger.forceRotateWithLock()
+	rlogger.Unlock()
 	for {
 		time.Sleep(time.Second)
 		rlogger.rotate()
