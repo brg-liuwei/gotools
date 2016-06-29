@@ -140,7 +140,14 @@ func (rlogger *RotateLogger) SetTimeRotate(t time.Duration) {
 
 func (rlogger *RotateLogger) Println(arg ...interface{}) {
 	rlogger.RLock()
+	defer rlogger.RUnlock()
 	atomic.AddInt32(&rlogger.lines, 1)
 	rlogger.logger.Println(arg...)
-	rlogger.RUnlock()
+}
+
+func (rlogger *RotateLogger) Printf(fmt string, arg ...interface{}) {
+	rlogger.RLock()
+	defer rlogger.RUnlock()
+	atomic.AddInt32(&rlogger.lines, 1)
+	rlogger.logger.Printf(fmt, arg...)
 }

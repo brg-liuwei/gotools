@@ -1,2 +1,4 @@
-install:
-    go get github.com/brg-liuwei/gotools
+### install:
+
+    go get -u github.com/brg-liuwei/gotools
+
