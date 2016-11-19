@@ -8,10 +8,15 @@ import (
 	"time"
 )
 
+type printer interface {
+	Println(...interface{})
+	Printf(...interface{})
+}
+
 type Estimate struct {
 	name   string
 	last   time.Time
-	logger *log.Logger
+	logger printer
 	buf    *bytes.Buffer
 }
 
