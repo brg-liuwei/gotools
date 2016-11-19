@@ -10,7 +10,6 @@ import (
 
 type printer interface {
 	Println(...interface{})
-	Printf(...interface{})
 }
 
 type Estimate struct {
@@ -34,7 +33,7 @@ func NewEstimate(name string) *Estimate {
 	}
 }
 
-func (es *Estimate) SetLogger(logger *log.Logger) {
+func (es *Estimate) SetLogger(logger printer) {
 	es.logger = logger
 }
 
