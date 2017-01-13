@@ -122,7 +122,7 @@ func (em *ExpiredMap) Get(key interface{}) interface{} {
 }
 
 func (em *ExpiredMap) NewIterator() *ExpiredMapIter {
-	return NewExpiredMap(em)
+	return NewExpiredMapIter(em)
 }
 
 type ExpiredMapIter struct {
