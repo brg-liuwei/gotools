@@ -121,6 +121,10 @@ func (em *ExpiredMap) Get(key interface{}) interface{} {
 	return nil
 }
 
+func (em *ExpiredMap) NewIterator() *ExpiredMapIter {
+	return NewExpiredMap(em)
+}
+
 type ExpiredMapIter struct {
 	em    *ExpiredMap
 	index int
