@@ -34,6 +34,16 @@ func NewRotateLogger(path string, prefix string, flag int, backup int) (*RotateL
 	if err != nil {
 		return nil, err
 	}
+
+	dir := filepath.Dir(absPath)
+	if _, err := os.Stat(dir); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(dir, os.ModeDir|os.ModePerm); err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	var fp *os.File
 	fp, err = os.OpenFile(absPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
