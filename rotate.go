@@ -93,7 +93,7 @@ func (rlogger *RotateLogger) forceRotateWithLock() {
 		}
 	}
 	rlogger.fp, _ = os.OpenFile(rlogger.absPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
-	rlogger.logger = log.New(rlogger.fp, rlogger.prefix, rlogger.flag)
+	rlogger.logger.SetOutput(rlogger.fp)
 }
 
 func (rlogger *RotateLogger) rotate() {
